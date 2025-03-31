@@ -1,0 +1,122 @@
+---
+title: "Data 607 Assignment 9"
+author: "Md. Tanzil Ehsan"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## DATA 607 - Assignment 9
+
+The New York Times web site provides a rich set of APIs, as described here: <https://developer.nytimes.com/apis>. We wiil  start by signing up for an API key.
+
+We will  choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it into an R DataFrame.
+
+
+
+## Install & Load Required Packages
+
+```{r }
+#install.packages("httr")
+#install.packages("jsonlite")
+#install.packages("tidyverse")  # For data manipulation
+
+```
+```{r}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+
+```
+
+## Set my API key in R Using .Renviron 
+```{r}
+#file.edit("~/.Renviron")
+
+
+```
+## Set API Key
+```{r}
+api_key <- Sys.getenv("NYTIMES_API_KEY= RXrScA3v9v3wJ2sj4AGy6oAD0dKIaE7V
+")
+
+```
+
+```{r}
+# to get articles currently on the homepage.
+# Define the API URL
+url <- paste0("https://api.nytimes.com/svc/topstories/v2/home.json?api-key=RXrScA3v9v3wJ2sj4AGy6oAD0dKIaE7V", api_key)
+
+# Fetch data from API
+response <- GET(url)
+
+# Convert response to JSON format
+data <- content(response, as = "text", encoding = "UTF-8")
+json_data <- fromJSON(data, flatten = TRUE)  # Flatten nested lists
+
+# Convert to Data Frame
+nyt_df <- as.data.frame(json_data$results)
+
+# View Data Frame structure
+glimpse(nyt_df)
+
+```
+
+
+
+## Collecting Data from API 
+```{r cars}
+url <- paste0('https://api.nytimes.com/svc/topstories/v2/science.json?api-key=RXrScA3v9v3wJ2sj4AGy6oAD0dKIaE7V', Sys.getenv("NYTIMES_API_KEY"))
+
+url2 <- paste0('https://api.nytimes.com/svc/topstories/v2/health.json?api-key=RXrScA3v9v3wJ2sj4AGy6oAD0dKIaE7V', Sys.getenv("NYTIMES_API_KEY"))
+
+science_data <- fromJSON(url)$results %>%
+  as.data.frame() %>%
+  add_column("web_section" = "Science", .before = "section")
+
+health_data <- fromJSON(url2)$results %>%
+  as.data.frame() %>%
+  add_column("web_section" = "Health", .before = "section")
+```
+
+## View the Data
+```{r}
+head(science_data )
+```
+## Data count
+```{r}
+most_common_subsection <- nyt_df  %>% 
+  count(subsection) %>%
+  arrange(desc(n)) 
+  
+most_common_subsection %>%
+  knitr::kable(col.names = c("subsection Tag", "Articles counts"))
+```
+
+```{r}
+# The descriptive tags
+most_common_des <- nyt_df  %>% 
+  count(des_facet) %>%
+  arrange(desc(n))  %>%
+filter(n >= 1)
+  
+most_common_des  %>%
+  knitr::kable(col.names = c("subsection Tag", "Counts"))
+```
+
+```{r}
+# The descriptive tags in science_data
+most_common_des <- science_data  %>% 
+  count(des_facet) %>%
+  arrange(desc(n))  %>%
+filter(n >= 1)
+  
+most_common_des  %>%
+  knitr::kable(col.names = c("subsection Tag", "Counts"))
+```
+
+## Conclusion:
+The goal of this assignment was to get  JSON data from the New York Times API and transform it into an R data frame. We successfully performed the transformation.
